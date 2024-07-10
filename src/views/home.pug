@@ -1,12 +1,35 @@
 doctype html
 html(lang="en")
-  head
-    meta(charset="UTF-8")
-    meta(name="viewport", content="width=device-width, initial-scale=1.0")
-    title Document
-  body 
-    header 
-      h1 Noom
-    main
-      h2 Welcome to Noom
-    script(src="/public/js/app.js")
+    head
+        meta(charset="UTF-8")
+        meta(http-equiv="X-UA-Compatible", content="IE=edge")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        title Noom
+        // 외부 스타일시트 링크
+        link(rel="stylesheet", href="https://unpkg.com/mvp.css")
+    body
+        header
+            h1 Noom
+        main
+            // 환영 섹션
+            div#welcome
+                form    
+                    input(placeholder="room name", required, type="text")
+                    button Enter room
+            // 통화 섹션
+            div#call
+                div#myStream
+                    // 내 비디오 스트림
+                    video#myFace(autoplay, playsinline, width="400", height="400")
+                    // 음소거 버튼
+                    button#mute Mute
+                    // 카메라 토글 버튼
+                    button#camera Turn Camera Off
+                    // 카메라 선택
+                    select#cameras
+                    // 상대방 비디오 스트림
+                    video#peerFace(autoplay, playsinline, width="400", height="400")
+        // Socket.io 클라이언트 스크립트
+        script(src="/socket.io/socket.io.js") 
+        // 사용자 정의 앱 스크립트
+        script(src="/public/js/app.js")

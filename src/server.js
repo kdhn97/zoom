@@ -1,39 +1,52 @@
 import http from "http";
-import WebSocket from "ws";
-// Node 속성 서버 설정
+import SocketIO from "socket.io";
 import express from "express";
 
-// Express 애플리케이션 인스턴스 생성
 const app = express();
 
-// 템플릿 엔진을 Pug로 설정
+// 뷰 엔진 설정
 app.set("view engine", "pug");
-// 뷰 파일들이 위치한 디렉토리를 설정
 app.set("views", __dirname + "/views");
 
-// 정적 파일을 제공하기 위해 '/public' 경로 설정
+// 정적 파일 제공
 app.use("/public", express.static(__dirname + "/public"));
 
-// 루트 경로에 대한 GET 요청을 처리하여 home.pug를 렌더링
-app.get("/", (req, res) => res.render("home"));
-app.get("/*", (req, res) => res.render("/"));
+// 홈 경로 설정
+app.get("/", (_, res) => res.render("home"));
 
-// 서버가 시작되었을 때 호출되는 콜백 함수
-const handleListen = () => console.log(`Listening on http://localhost:3000`);
+// 모든 다른 경로를 홈으로 리디렉션
+app.get("/*", (_, res) => res.redirect("/"));
 
-// 포트 3000에서 서버 리스닝 시작
-// app.listen(3000, handleListen)
+// HTTP 서버 생성
+const httpServer = http.createServer(app);
 
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+// WebSocket 서버 생성
+const wsServer = SocketIO(httpServer);
 
-wss.on("connection", (socket) => {
-  console.log("Connected to Browser✅");
-  socket.on("close", () => console.log("DisConnected to Browser❎"));
-  socket.on("message", (message) => {
-    console.log(message.toString("utf8"));
+// WebSocket 연결 이벤트 핸들러
+wsServer.on("connection", (socket) => {
+  // 사용자가 방에 참가할 때
+  socket.on("join_room", (roomName) => {
+    socket.join(roomName); // 방에 참가
+    socket.to(roomName).emit("welcome"); // 다른 사용자에게 환영 메시지 전송
   });
-  socket.send("hello");
+
+  // 사용자가 offer 신호를 보낼 때
+  socket.on("offer", (offer, roomName) => {
+    socket.to(roomName).emit("offer", offer); // 방의 다른 사용자에게 offer 전송
+  });
+
+  // 사용자가 answer 신호를 보낼 때
+  socket.on("answer", (answer, roomName) => {
+    socket.to(roomName).emit("answer", answer); // 방의 다른 사용자에게 answer 전송
+  });
+
+  // ICE 후보를 받을 때
+  socket.on("ice", (ice, roomName) => {
+    socket.to(roomName).emit("ice", ice); // 방의 다른 사용자에게 ICE 후보 전송
+  });
 });
 
-server.listen(3000, handleListen);
+// 서버 시작 및 포트 3001에서 수신 대기
+const handleListen = () => console.log(`Listening on http://localhost:3002`);
+httpServer.listen(3002, handleListen);
